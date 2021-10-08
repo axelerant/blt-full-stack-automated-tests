@@ -1,0 +1,27 @@
+{
+  "name": "full-stack-automated-tests-in-drupal",
+  "version": "1.0.0",
+  "description": "Exploring full-stack-automated-tests in Drupal",
+  "main": "index.js",
+  "scripts": {
+    "visual": "as-a applitools npx cypress run --env grepTags=@visual --headless --browser chrome",
+    "json:api": "npx cypress run --env grepTags=@json:api --headless --browser chrome",
+    "axe": "npx cypress run --env grepTags=@accessibility --headless --browser chrome",
+    "performance": "npx cypress run --env grepTags=@lh-performance --headless --browser chrome",
+    "test": "npx cypress run --headless --browser chrome",
+    "cypress:open": "cypress open"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@applitools/eyes-cypress": "^3.22.5",
+    "as-a": "^1.4.1",
+    "axe-core": "^4.3.3",
+    "cypress": "^8.5.0",
+    "cypress-audit": "^1.0.0",
+    "cypress-axe": "^0.13.0",
+    "cypress-grep": "^2.5.3",
+    "lighthouse": "^8.3.0"
+  }
+}

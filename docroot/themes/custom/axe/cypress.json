@@ -1,0 +1,14 @@
+{
+    "baseUrl": "http://local.qa-hackathon-drupal-vm.com",
+    "eyesTimeout": 180000,
+    "videoCompression": false,
+    "video": false,
+    "env": {
+        "cyAdminUser": "admin",
+        "cyAdminPassword": "admin",
+        "cyAdminRole": "administrator",
+        "cyEditorUser": "editor",
+        "cyEditorPassword": "editor",
+        "cyEditorRole": "editor"
+      }
+}
