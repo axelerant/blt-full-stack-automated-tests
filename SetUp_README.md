@@ -6,9 +6,9 @@ This project is based on BLT, an open-source project template and tool that enab
 
 2. Ensure that your computer meets the minimum installation requirements by referring [this](https://docs.acquia.com/blt/install/).
 
-3. Please install [Vagrant](https://www.vagrantup.com/downloads) and [Oracle VirtualBox](https://www.virtualbox.org/wiki/Downloads) softwares by referring this [Drupal VM](https://github.com/geerlingguy/drupal-vm) to build the drupal site in Virtual Machine. **Note: Drupal VM recommends latest versions of these: Vagrant 2.2.x, VirtualBox 6.1.x, Python >=3.8**. Please manage your current default python version(i.e, ```python --version```) by referring [this](https://stackoverflow.com/a/54570220)
+3. Please install [Vagrant](https://www.vagrantup.com/downloads) and [Oracle VirtualBox](https://www.virtualbox.org/wiki/Downloads) by referring this [Drupal VM](https://github.com/geerlingguy/drupal-vm) to build the drupal site in Virtual Machine. **Note: Drupal VM recommends the latest versions of these: Vagrant 2.2.x, VirtualBox 6.1.x, Python >=3.8**. Please manage your current default python version(i.e, ```python --version```) by referring [this](https://stackoverflow.com/a/54570220)
 
-4. Recommend to try the following BLT set-up from the root directory(ex:'/Users/yourname/') where you have full permissions to install the softwares/dependencies.
+4. Recommend trying the following BLT set-up from the root directory(ex:'/Users/yourname/') where you have full permissions to install all the required dependencies.
 
 5. Fork/Clone this project repository and follow the set-up instructions below
 
@@ -38,7 +38,7 @@ BLT provides an automation layer for testing, building, and launching Drupal 8 a
     $ vagrant ssh
     ```
 
-5. Set-up a local Drupal site with an empty database by following first command. Just to add a note that If it is a multisite we can identify a specific site.
+5. Set up a local Drupal site with an empty database by following first command. Just to add a note that If it is a multisite we can identify a specific site.
    ```
      $ blt setup
     ```
@@ -48,7 +48,7 @@ BLT provides an automation layer for testing, building, and launching Drupal 8 a
    ```
 
 +   **Note:**
-    If console is looking for user input during installation, proceed with default option by press enter as we followed already in lando project and if any exception "Drupal\Core\Installer\Exception\InstallerException" throws which is due to permission, then please give permission to the docroot folder by executing ```$ chmod -R 777 docroot``` for installing respective plugins belongs to umami profile and execute again ```blt setup```. I will work with developers to get rid of this exception.
+    If console is looking for user input during installation, proceed with default option by press enter and if any exception "Drupal\Core\Installer\Exception\InstallerException" throws which is due to permission, then please give permission to the docroot folder by executing ```$ chmod -R 777 docroot``` for installing respective plugins belongs to umami profile and execute again ```blt setup```. I will work with developers to get rid of this exception.
 
 
 6. Now you would all set to see the umami site and log into your site(http://local.qa-hackathon-drupal-vm.com) with drush:

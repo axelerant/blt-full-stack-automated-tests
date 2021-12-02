@@ -2,10 +2,11 @@
 
 namespace Drupal;
 
+use Behat\Mink\Element\NodeElement;
+use Behat\Mink\Exception\ElementNotFoundException;
 use Drupal\DrupalExtension\Context\RawDrupalContext;
 use Behat\Mink\Exception\ExpectationException;
-use Behat\Mink\Exception\UnsupportedDriverActionException;
-use Behat\Mink\Exception\DriverException;
+use Exception;
 
 /**
  * FeatureContext class defines custom step definitions for Behat.
@@ -25,6 +26,7 @@ class FeatureContext extends RawDrupalContext
 
   /**
    * @When I fill in the :arg1 field with :arg2
+   * @throws ElementNotFoundException
    */
   public function iFillInTheFieldWith($name, $value)
   {
@@ -37,20 +39,20 @@ class FeatureContext extends RawDrupalContext
   /**
    * Return a region from the current page.
    *
-   * @throws \Exception
-   *   If region cannot be found.
-   *
    * @param string $region
    *   The machine name of the region to return.
    *
-   * @return \Behat\Mink\Element\NodeElement
+   * @return NodeElement
+   * @throws Exception
+   *   If region cannot be found.
+   *
    */
-  public function getRegion($region)
+  public function getRegion(string $region): NodeElement
   {
     $session = $this->getSession();
     $regionObj = $session->getPage()->find('region', $region);
     if (!$regionObj) {
-      throw new \Exception(sprintf('No region "%s" found on the page %s.', $region, $session->getCurrentUrl()));
+      throw new Exception(sprintf('No region "%s" found on the page %s.', $region, $session->getCurrentUrl()));
     }
     return $regionObj;
   }
@@ -59,7 +61,7 @@ class FeatureContext extends RawDrupalContext
    * Find elements in a specific region.
    *
    * @Then I should see the expected elements in the :region( region)
-   * @throws \Exception
+   * @throws Exception
    *   If region or elements within it cannot be found.
    */
   public function assertRegionElements($region)
@@ -70,7 +72,7 @@ class FeatureContext extends RawDrupalContext
       foreach (['.links li:nth-child(1)', '.links li:nth-child(2)', '.menu-account__link', '.menu-main li:nth-child(1)', '.menu-main li:nth-child(2)', '.menu-main li:nth-child(3)'] as $webElement) {
         $element = $regionObj->find('css', $webElement);
         if (empty($element)) {
-          throw new \Exception(sprintf('No element with the identity of "%s" in the "%s" region on the page %s', $webElement, $region, $this->getSession()->getCurrentUrl()));
+          throw new Exception(sprintf('No element with the identity of "%s" in the "%s" region on the page %s', $webElement, $region, $this->getSession()->getCurrentUrl()));
         }
       }
     } else if ($region === 'footer') {
@@ -78,11 +80,11 @@ class FeatureContext extends RawDrupalContext
       foreach (['.block__title .field', '.footer-promo-content .field:nth-child(1)', '.footer-promo-content .field:nth-child(2)', '#block-umami-footer .block__title', '#block-umami-footer .menu-footer__link'] as $webElement) {
         $element = $regionObj->find('css', $webElement);
         if (empty($element)) {
-          throw new \Exception(sprintf('No element with the identity of "%s" in the "%s" region on the page %s', $webElement, $region, $this->getSession()->getCurrentUrl()));
+          throw new Exception(sprintf('No element with the identity of "%s" in the "%s" region on the page %s', $webElement, $region, $this->getSession()->getCurrentUrl()));
         }
       }
     } else {
-      throw new \Exception('Incorrect Region');
+      throw new Exception('Incorrect Region');
     }
   }
 
@@ -91,18 +93,18 @@ class FeatureContext extends RawDrupalContext
    * @var array
    */
   public $visited_links = array();
+
   /**
    * @Then every link in the block :arg1 should pass
+   * @throws Exception
    */
   public function everyLinkInTheBlockShouldWork($arg1)
   {
     $elements = $this->getSession()->getPage()->findAll('xpath', $arg1);
     $count = count($elements);
-
     print "\n Total Links Count: $count \n";
-
     $i = 0;
-    $linkArray=array();
+    $linkArray = array();
     //Store all the links in the given page in $linkArray
     foreach ($elements as $element) {
       $i++;
@@ -111,62 +113,50 @@ class FeatureContext extends RawDrupalContext
         continue;
       }
       $href = $element->getAttribute('href');
-      print "\n Link #$i ". $href . "\n";
-      array_push($linkArray,$href);
+      print "\n Link #$i " . $href . "\n";
+      array_push($linkArray, $href);
     }
 
-    for($i=0; $i<count($linkArray); $i++){
+    for ($i = 0; $i < count($linkArray); $i++) {
       // Skip if empty
       if (empty($linkArray[$i])) {
         continue;
       }
-
       // Skip if already visited
       if (isset($this->visited_links[$linkArray[$i]])) {
         print "Skipping visited link: $linkArray[$i] \n\n";
         continue;
       }
-
       // Save URL for later to avoid duplicates.
       $this->visited_links[$linkArray[$i]] = $linkArray[$i];
-
       // Skip if an anchor tag
       if (strpos($linkArray[$i], '#') === 0) {
         print "Skipping anchor link: $linkArray[$i] \n\n";
         continue;
       }
-
       // Skip remote links
       if (strpos($linkArray[$i], 'http') === 0) {
         print "Skipping remote link: $linkArray \n\n";
         continue;
       }
-
       // Skip mailto links
       if (strpos($linkArray[$i], 'mailto') === 0) {
         print "Skipping mailto link: $linkArray[$i]  \n\n";
         continue;
       }
-
-      print "\n Checking Link: " .$linkArray[$i]. "\n";
-
+      print "\n Checking Link: " . $linkArray[$i] . "\n";
       //Mimics Drupal\DrupalExtension\Context\MinkContext::assertAtPath
       $this->getSession()->visit($this->locatePath($linkArray[$i]));
-
       try {
         $this->getSession()->getStatusCode();
         $this->assertSession()->statusCodeEquals('200');
         print "200 Success \n";
-      } catch (UnsupportedDriverActionException $e) {
-        // Simply continue on, as this driver doesn't support HTTP response codes.
-      } catch (UnsupportedDriverActionException $e) {
+      } catch (Exception $e) {
         print "200 Success NOT received \n";
-        throw new \Exception("Page at URL $href did not return 200 code.");
-      } catch (DriverException $e) {
-        throw new \Exception($e->getMessage());
+        throw new Exception("Page at URL $linkArray[$i] throws " . $e->getMessage());
       }
       print "\n";
-   }
+    }
     print "Done! Checked $count Links";
   }
 
@@ -178,7 +168,7 @@ class FeatureContext extends RawDrupalContext
    *
    * @When I wait :seconds second(s)
    */
-  public function wait($seconds)
+  public function wait(int $seconds)
   {
     sleep($seconds);
   }
@@ -197,7 +187,7 @@ class FeatureContext extends RawDrupalContext
    * @param string $field
    * @return string
    */
-  protected function getFieldSelector($field)
+  protected function getFieldSelector(string $field): string
   {
     $selector = $field;
 
@@ -254,7 +244,7 @@ class FeatureContext extends RawDrupalContext
    * @param string $argument
    * @return string
    */
-  protected function fixStepArgument($argument)
+  protected function fixStepArgument(string $argument): string
   {
     return str_replace('\\"', '"', $argument);
   }
@@ -262,6 +252,7 @@ class FeatureContext extends RawDrupalContext
 
   /**
    * @Then I( should) see :text in the :tag element in the :region( region)
+   * @throws Exception
    */
   public function assertRegionElementText($text, $tag, $region)
   {
@@ -269,23 +260,22 @@ class FeatureContext extends RawDrupalContext
     $paginationElements = $page->findAll('css', ".pager__item:not(.is-active)");
     $regionObj = $this->getRegion($region);
     $results = $regionObj->findAll('css', $tag);
-    //If The search results are resides on the same page and doesn't have pagination
+    if (empty($results)) {
+      throw new Exception(sprintf('Zero elements "%s" found in the "%s" region on the page %s', $results, $region, $this->getSession()->getCurrentUrl()));
+    }
+    //If the search results are resides on the same page and doesn't have pagination
     if (empty($paginationElements)) {
-      if (!empty($results)) {
-        foreach ($results as $result) {
-          if (stripos($result->getText(), $text) == false) {
-            throw new \Exception(sprintf('The text "%s" was not found in the "%s" text in the "%s" region on the page %s', $text, $result->getText(), $region, $this->getSession()->getCurrentUrl()));
-          }
+      foreach ($results as $result) {
+        if (stripos($result->getText(), $text) == false) {
+          throw new Exception(sprintf('The text "%s" was not found in the "%s" text in the "%s" region on the page %s', $text, $result->getText(), $region, $this->getSession()->getCurrentUrl()));
         }
       }
     } else {
       //The search results are resides on more than one page and have pagination
       foreach ($paginationElements as $paginationElement) {
-        if (!empty($results)) {
-          foreach ($results as $result) {
-            if (stripos($result->getText(), $text) == false) {
-              throw new \Exception(sprintf('The text "%s" was not found in the "%s" text in the "%s" region on the page %s', $text, $result->getText(), $region, $this->getSession()->getCurrentUrl()));
-            }
+        foreach ($results as $result) {
+          if (stripos($result->getText(), $text) == false) {
+            throw new Exception(sprintf('The text "%s" was not found in the "%s" text in the "%s" region on the page %s', $text, $result->getText(), $region, $this->getSession()->getCurrentUrl()));
           }
         }
         //Click the paginated element on the page if it's only available
@@ -298,6 +288,7 @@ class FeatureContext extends RawDrupalContext
 
   /**
    * @Given /^I click an element having xpath "([^"]*)"$/
+   * @throws Exception
    */
   public function iClickAnElementHavingXpath($xpath)
   {
@@ -306,19 +297,20 @@ class FeatureContext extends RawDrupalContext
     if ($element) {
       $element->click();
     } else {
-      throw new \Exception($xpath . " not found");
+      throw new Exception($xpath . " not found");
     }
   }
 
   /**
    * @Then /^(?:|I )click (?:on |)(?:|the )"([^"]*)"(?:|.*)$/
+   * @throws Exception
    */
   public
   function iClickAnElementHavingCss($arg1)
   {
     $findName = $this->getSession()->getPage()->find("css", $arg1);
     if (!$findName) {
-      throw new \Exception($arg1 . " not found");
+      throw new Exception($arg1 . " not found");
     } else {
       $findName->click();
     }
@@ -326,6 +318,7 @@ class FeatureContext extends RawDrupalContext
 
   /**
    * @When I scroll :elementId into view
+   * @throws Exception
    */
   public function scrollIntoView($elementId)
   {
@@ -337,8 +330,8 @@ class FeatureContext extends RawDrupalContext
 JS;
     try {
       $this->getSession()->executeScript($function);
-    } catch (\Exception $e) {
-      throw new \Exception("ScrollIntoView failed");
+    } catch (Exception $e) {
+      throw new Exception("ScrollIntoView failed and throws " . $e->getMessage());
     }
   }
 
@@ -346,6 +339,7 @@ JS;
   /**
    * Compare the validationMessage of given element.
    * @Then /^the "([^"]*)" validationMessage should be "([^"]*)"$/
+   * @throws Exception
    */
   public function theValidationMessageShouldBe($css, $expectedText)
   {
@@ -358,7 +352,7 @@ JS;
 JS;
     $actualText = $this->getSession()->evaluateScript($function);
     if ($actualText !== $expectedText) {
-      throw new \Exception(sprintf("Expected validationMessage attribute value '%s' doesn't match with actual value '%s'", $expectedText, $actualText ));
+      throw new Exception(sprintf("Expected validationMessage attribute value '%s' doesn't match with actual value '%s'", $expectedText, $actualText));
     }
   }
 
@@ -366,6 +360,7 @@ JS;
    * Fill in wysiwyg on field.
    *
    * @Then I fill in wysiwyg on field :locator with :value
+   * @throws Exception
    */
   public function iFillInWysiwygOnFieldWith($locator, $value)
   {
@@ -375,7 +370,7 @@ JS;
     }
     $fieldId = $el->getAttribute('id');
     if (empty($fieldId)) {
-      throw new \Exception('Could not find an id for field with locator: ' . $locator);
+      throw new Exception('Could not find an id for field with locator: ' . $locator);
     }
     $this->getSession()
       ->executeScript("CKEDITOR.instances[\"$fieldId\"].setData(\"$value\");");
